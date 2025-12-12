@@ -1,0 +1,882 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Тадж-Махал — Грамматический тренажёр</title>
+    <script crossorigin src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+    <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+        }
+    </style>
+</head>
+<body>
+    <div id="root"></div>
+    
+    <script type="text/babel">
+        const { useState, useEffect } = React;
+        const { ChevronDown, ChevronUp, Lightbulb, Check, X, Trophy, RotateCcw } = lucide;
+
+        const TajMahalTrainer = () => {
+          const [selectedLevel, setSelectedLevel] = useState('A1');
+          const [showTheory, setShowTheory] = useState(true);
+          const [currentExercise, setCurrentExercise] = useState(0);
+          const [score, setScore] = useState(0);
+          const [totalAnswered, setTotalAnswered] = useState(0);
+          const [showHint, setShowHint] = useState(false);
+          const [feedback, setFeedback] = useState(null);
+          const [userAnswers, setUserAnswers] = useState({});
+          const [completed, setCompleted] = useState(false);
+
+          const shuffleArray = (array) => {
+            const newArray = [...array];
+            for (let i = newArray.length - 1; i > 0; i--) {
+              const j = Math.floor(Math.random() * (i + 1));
+              [newArray[i], newArray[j]] = [newArray[j], newArray[i]];
+            }
+            return newArray;
+          };
+
+          const exercises = {
+            A1: [
+              {
+                id: 'a1-1',
+                type: 'choice',
+                question: 'Тадж-Махал находится в городе Агра ... Дели.',
+                options: ['у', 'около', 'возле', 'недалеко от'],
+                correct: 'недалеко от',
+                hint: 'Когда речь о расстоянии между городами, используем "недалеко от"'
+              },
+              {
+                id: 'a1-2',
+                type: 'choice',
+                question: 'Мы живём ... реки.',
+                options: ['у', 'около', 'возле', 'недалеко от'],
+                correct: 'у',
+                hint: 'Предлог "у" требует родительного падежа. Река (она) → реки'
+              },
+              {
+                id: 'a1-3',
+                type: 'choice',
+                question: 'Туристы стоят ... музея.',
+                options: ['у', 'около', 'возле', 'недалеко от'],
+                correct: 'около',
+                hint: 'Предлог "около" требует родительного падежа. Музей (он) → музея'
+              },
+              {
+                id: 'a1-4',
+                type: 'choice',
+                question: 'Школа ... нашего дома.',
+                options: ['у', 'около', 'возле', 'недалеко от'],
+                correct: 'возле',
+                hint: 'Предлог "возле" требует родительного падежа. Наш дом → нашего дома'
+              },
+              {
+                id: 'a1-5',
+                type: 'choice',
+                question: '... реки Джамна построили дворец.',
+                options: ['У', 'Около', 'Возле', 'Недалеко от'],
+                correct: 'У',
+                hint: 'Предлог "у" указывает на непосредственную близость к объекту'
+              },
+              {
+                id: 'a1-6',
+                type: 'choice',
+                question: 'Вокзал расположен ... памятника архитектуры.',
+                options: ['у', 'около', 'возле', 'недалеко от'],
+                correct: 'недалеко от',
+                hint: 'Все предлоги подходят, но в тексте используется "недалеко от"'
+              },
+              {
+                id: 'a1-7',
+                type: 'choice',
+                question: '... музея всегда много туристов.',
+                options: ['У', 'Около', 'Возле', 'Недалеко от'],
+                correct: 'Около',
+                hint: 'Предлог "около" указывает на общую близость к объекту'
+              },
+              {
+                id: 'a1-8',
+                type: 'choice',
+                question: 'Парк находится ... школы.',
+                options: ['у', 'около', 'возле', 'недалеко от'],
+                correct: 'возле',
+                hint: 'Школа (она) → школы в родительном падеже'
+              },
+              {
+                id: 'a1-9',
+                type: 'choice',
+                question: 'Дети играют ... дома.',
+                options: ['у', 'около', 'возле', 'недалеко от'],
+                correct: 'у',
+                hint: 'Дом (он) → дома в родительном падеже'
+              },
+              {
+                id: 'a1-10',
+                type: 'choice',
+                question: 'Магазин ... метро.',
+                options: ['у', 'около', 'возле', 'недалеко от'],
+                correct: 'около',
+                hint: 'Метро - несклоняемое существительное'
+              }
+            ],
+            A2: [
+              {
+                id: 'a2-1',
+                type: 'correction',
+                question: 'Исправьте ошибку: Мы живём около озеро.',
+                options: ['около озера', 'около озеру', 'около озере', 'около озером'],
+                correct: 'около озера',
+                hint: 'Озеро (оно) → озера в родительном падеже'
+              },
+              {
+                id: 'a2-2',
+                type: 'correction',
+                question: 'Исправьте ошибку: Возле школа есть парк.',
+                options: ['возле школы', 'возле школе', 'возле школу', 'возле школой'],
+                correct: 'возле школы',
+                hint: 'Школа (она) → школы в родительном падеже'
+              },
+              {
+                id: 'a2-3',
+                type: 'correction',
+                question: 'Исправьте ошибку: Недалеко от вокзал находится отель.',
+                options: ['недалеко от вокзала', 'недалеко от вокзалу', 'недалеко от вокзале', 'недалеко от вокзалом'],
+                correct: 'недалеко от вокзала',
+                hint: 'Вокзал (он) → вокзала в родительном падеже'
+              },
+              {
+                id: 'a2-4',
+                type: 'choice',
+                question: 'Около двадцати тысяч человек строили мавзолей ... реки Джамна.',
+                options: ['у', 'около', 'возле', 'недалеко от'],
+                correct: 'у',
+                hint: 'Из текста: "у реки Джамна появился роскошный дворец"'
+              },
+              {
+                id: 'a2-5',
+                type: 'choice',
+                question: 'Лучшие зодчие работали ... дворца.',
+                options: ['у', 'около', 'возле', 'недалеко от'],
+                correct: 'около',
+                hint: 'Когда говорим о местонахождении людей рядом с объектом'
+              },
+              {
+                id: 'a2-6',
+                type: 'correction',
+                question: 'Исправьте ошибку: У река построили мост.',
+                options: ['у реки', 'у реке', 'у реку', 'у рекой'],
+                correct: 'у реки',
+                hint: 'Река (она) → реки в родительном падеже'
+              },
+              {
+                id: 'a2-7',
+                type: 'correction',
+                question: 'Исправьте ошибку: Возле окно стоит стол.',
+                options: ['возле окна', 'возле окну', 'возле окне', 'возле окном'],
+                correct: 'возле окна',
+                hint: 'Окно (оно) → окна в родительном падеже'
+              },
+              {
+                id: 'a2-8',
+                type: 'choice',
+                question: 'Памятник архитектуры находится ... центра города.',
+                options: ['у', 'около', 'возле', 'недалеко от'],
+                correct: 'недалеко от',
+                hint: 'Когда говорим о районе города'
+              },
+              {
+                id: 'a2-9',
+                type: 'correction',
+                question: 'Исправьте ошибку: Около дерево растут цветы.',
+                options: ['около дерева', 'около дереву', 'около дереве', 'около деревом'],
+                correct: 'около дерева',
+                hint: 'Дерево (оно) → дерева в родительном падеже'
+              },
+              {
+                id: 'a2-10',
+                type: 'choice',
+                question: 'Остановка автобуса ... нашей школы.',
+                options: ['у', 'около', 'возле', 'недалеко от'],
+                correct: 'возле',
+                hint: 'Все три предлога подходят для выражения близости'
+              }
+            ],
+            B1: [
+              {
+                id: 'b1-1',
+                type: 'context',
+                question: 'Выберите наиболее подходящий вариант: Наш отель расположен ... аэропорта, поэтому мы слышим шум самолётов.',
+                options: ['у', 'около', 'возле', 'недалеко от'],
+                correct: 'недалеко от',
+                hint: 'Слышим шум - значит есть некоторое расстояние, но не слишком далеко'
+              },
+              {
+                id: 'b1-2',
+                type: 'context',
+                question: 'Выберите наиболее подходящий вариант: Давай встретимся ... входа в метро, я буду стоять прямо там.',
+                options: ['у', 'около', 'возле', 'недалеко от'],
+                correct: 'у',
+                hint: 'Непосредственная близость, прямо у объекта'
+              },
+              {
+                id: 'b1-3',
+                type: 'choice',
+                question: 'Гур-Эмир - мавзолей Тамерлана. Он находится ... центра Самарканда.',
+                options: ['у', 'около', 'возле', 'недалеко от'],
+                correct: 'недалеко от',
+                hint: 'Говоря о районах города, используем "недалеко от"'
+              },
+              {
+                id: 'b1-4',
+                type: 'context',
+                question: 'Регистан - главная площадь ... которой расположены три медресе.',
+                options: ['у', 'около', 'возле', 'недалеко от'],
+                correct: 'около',
+                hint: 'Когда объекты находятся вокруг центрального места'
+              },
+              {
+                id: 'b1-5',
+                type: 'choice',
+                question: 'Ансамбль Шахи-Зинда находится ... древнего городища Афросиаб.',
+                options: ['у', 'около', 'возле', 'недалеко от'],
+                correct: 'у',
+                hint: 'Непосредственная близость к историческому объекту'
+              },
+              {
+                id: 'b1-6',
+                type: 'context',
+                question: 'Медресе Улугбека ... Регистана - одно из старейших зданий площади.',
+                options: ['у', 'около', 'возле', 'недалеко от'],
+                correct: 'возле',
+                hint: 'Здание стоит рядом с площадью'
+              },
+              {
+                id: 'b1-7',
+                type: 'choice',
+                question: 'Обсерватория Улугбека была построена ... Самарканда в XV веке.',
+                options: ['у', 'около', 'возле', 'недалеко от'],
+                correct: 'недалеко от',
+                hint: 'За городом, но на небольшом расстоянии'
+              },
+              {
+                id: 'b1-8',
+                type: 'context',
+                question: '... каждого медресе на Регистане есть красивый портал.',
+                options: ['У', 'Около', 'Возле', 'Недалеко от'],
+                correct: 'У',
+                hint: 'Портал является частью здания'
+              },
+              {
+                id: 'b1-9',
+                type: 'choice',
+                question: 'Мавзолей Рухабад находится ... ансамбля Гур-Эмир.',
+                options: ['у', 'около', 'возле', 'недалеко от'],
+                correct: 'недалеко от',
+                hint: 'Два памятника в одном районе города'
+              },
+              {
+                id: 'b1-10',
+                type: 'context',
+                question: 'Туристы любят фотографироваться ... входа в медресе.',
+                options: ['у', 'около', 'возле', 'недалеко от'],
+                correct: 'у',
+                hint: 'Прямо рядом со входом, у самого объекта'
+              }
+            ]
+          };
+
+          const [shuffledExercises, setShuffledExercises] = useState([]);
+
+          useEffect(() => {
+            const exercisesForLevel = exercises[selectedLevel] || [];
+            const shuffled = exercisesForLevel.map(ex => ({
+              ...ex,
+              options: ex.options ? shuffleArray(ex.options) : []
+            }));
+            setShuffledExercises(shuffled);
+            setCurrentExercise(0);
+            setScore(0);
+            setTotalAnswered(0);
+            setUserAnswers({});
+            setFeedback(null);
+            setCompleted(false);
+          }, [selectedLevel]);
+
+          const handleAnswer = (answer) => {
+            const current = shuffledExercises[currentExercise];
+            if (!current) return;
+
+            const isCorrect = answer === current.correct;
+
+            setUserAnswers({...userAnswers, [current.id]: answer});
+            
+            if (isCorrect) {
+              setScore(score + 1);
+              setFeedback({ type: 'correct', message: 'Отлично! Правильный ответ!' });
+            } else {
+              setFeedback({ type: 'incorrect', message: `Неправильно. Правильный ответ: ${current.correct}` });
+            }
+
+            setTotalAnswered(totalAnswered + 1);
+
+            setTimeout(() => {
+              if (currentExercise < shuffledExercises.length - 1) {
+                setCurrentExercise(currentExercise + 1);
+                setFeedback(null);
+                setShowHint(false);
+              } else {
+                setCompleted(true);
+              }
+            }, 2000);
+          };
+
+          const resetTrainer = () => {
+            setCurrentExercise(0);
+            setScore(0);
+            setTotalAnswered(0);
+            setUserAnswers({});
+            setFeedback(null);
+            setCompleted(false);
+            setShowHint(false);
+            const exercisesForLevel = exercises[selectedLevel] || [];
+            const shuffled = exercisesForLevel.map(ex => ({
+              ...ex,
+              options: ex.options ? shuffleArray(ex.options) : []
+            }));
+            setShuffledExercises(shuffled);
+          };
+
+          const currentEx = shuffledExercises[currentExercise];
+
+          // Simple icon components
+          const ChevronDown = () => <span style={{fontSize: '1.5em'}}>▼</span>;
+          const ChevronUp = () => <span style={{fontSize: '1.5em'}}>▲</span>;
+          const Lightbulb = () => <span style={{fontSize: '1.2em'}}>💡</span>;
+          const Check = () => <span style={{fontSize: '1.5em', color: '#28a745'}}>✓</span>;
+          const X = () => <span style={{fontSize: '1.5em', color: '#dc3545'}}>✗</span>;
+          const Trophy = () => <span style={{fontSize: '3em'}}>🏆</span>;
+          const RotateCcw = () => <span style={{fontSize: '1.2em'}}>🔄</span>;
+
+          return (
+            <div style={{
+              minHeight: '100vh',
+              background: 'linear-gradient(135deg, #00d4ff 0%, #20e3b2 25%, #4df6d9 50%, #20e3b2 75%, #00d4ff 100%)',
+              padding: '20px',
+              fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif'
+            }}>
+              {/* Header */}
+              <div style={{
+                textAlign: 'center',
+                marginBottom: '30px',
+                color: 'white',
+                textShadow: '2px 2px 4px rgba(0,0,0,0.3)'
+              }}>
+                <h1 style={{ fontSize: '2.5em', marginBottom: '10px', fontWeight: 'bold' }}>
+                  🕌 Тадж-Махал — Грамматический тренажёр
+                </h1>
+                <h2 style={{ fontSize: '1.3em', fontWeight: 'normal', marginBottom: '8px' }}>
+                  Родительный падеж с предлогами <span style={{
+                    background: '#FFEB3B',
+                    color: '#333',
+                    padding: '3px 10px',
+                    borderRadius: '5px',
+                    fontWeight: 'bold',
+                    boxShadow: '0 0 15px rgba(255,235,59,0.6)',
+                    fontSize: '1.1em'
+                  }}>У, ОКОЛО, ВОЗЛЕ, НЕДАЛЕКО ОТ</span>
+                </h2>
+                <div style={{ fontSize: '1.1em', opacity: 0.95, fontStyle: 'italic' }}>
+                  Joy kelishigi predloglari bilan | Genitive Case with Prepositions of Place
+                </div>
+              </div>
+
+              {/* Level Buttons */}
+              <div style={{
+                display: 'flex',
+                justifyContent: 'center',
+                gap: '15px',
+                marginBottom: '30px'
+              }}>
+                {['A1', 'A2', 'B1'].map(level => (
+                  <button
+                    key={level}
+                    onClick={() => setSelectedLevel(level)}
+                    style={{
+                      padding: '12px 30px',
+                      fontSize: '1.1em',
+                      fontWeight: 'bold',
+                      border: 'none',
+                      borderRadius: '25px',
+                      cursor: 'pointer',
+                      background: selectedLevel === level
+                        ? 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)'
+                        : 'white',
+                      color: selectedLevel === level ? 'white' : '#333',
+                      boxShadow: '0 4px 15px rgba(0,0,0,0.2)',
+                      transform: selectedLevel === level ? 'scale(1.1)' : 'scale(1)',
+                      transition: 'all 0.3s ease'
+                    }}
+                  >
+                    {level}
+                  </button>
+                ))}
+              </div>
+
+              {/* Score Display */}
+              <div style={{
+                textAlign: 'center',
+                marginBottom: '20px',
+                display: 'flex',
+                justifyContent: 'center',
+                gap: '20px'
+              }}>
+                <div style={{
+                  background: 'white',
+                  padding: '10px 20px',
+                  borderRadius: '15px',
+                  boxShadow: '0 4px 10px rgba(0,0,0,0.1)',
+                  fontWeight: 'bold',
+                  color: '#667eea'
+                }}>
+                  🏆 Правильных ответов: {score} / {totalAnswered}
+                </div>
+                <div style={{
+                  background: 'white',
+                  padding: '10px 20px',
+                  borderRadius: '15px',
+                  boxShadow: '0 4px 10px rgba(0,0,0,0.1)',
+                  fontWeight: 'bold',
+                  color: '#FF6B6B'
+                }}>
+                  Прогресс: {currentExercise + 1} / {shuffledExercises.length}
+                </div>
+              </div>
+
+              {/* Theory Section */}
+              <div style={{
+                maxWidth: '900px',
+                margin: '0 auto 30px',
+                background: 'white',
+                borderRadius: '15px',
+                overflow: 'hidden',
+                boxShadow: '0 8px 25px rgba(0,0,0,0.15)'
+              }}>
+                <button
+                  onClick={() => setShowTheory(!showTheory)}
+                  style={{
+                    width: '100%',
+                    padding: '20px',
+                    background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+                    color: 'white',
+                    border: 'none',
+                    fontSize: '1.2em',
+                    fontWeight: 'bold',
+                    cursor: 'pointer',
+                    display: 'flex',
+                    justifyContent: 'space-between',
+                    alignItems: 'center'
+                  }}
+                >
+                  <span>📚 Грамматическая справка</span>
+                  {showTheory ? <ChevronUp /> : <ChevronDown />}
+                </button>
+                
+                {showTheory && (
+                  <div style={{ padding: '30px', lineHeight: '1.8', color: '#333' }}>
+                    <h3 style={{ color: '#667eea', marginBottom: '15px', textAlign: 'center', fontSize: '1.5em' }}>
+                      РОДИТЕЛЬНЫЙ ПАДЕЖ (Кого? Чего?)
+                    </h3>
+                    
+                    <div style={{ marginBottom: '25px' }}>
+                      <h4 style={{ color: '#FF6B6B', marginBottom: '15px', textAlign: 'center' }}>С предлогами места / Joy predloglari / Prepositions of Place</h4>
+                      
+                      {/* Bilingual Table */}
+                      <table style={{
+                        width: '100%',
+                        borderCollapse: 'collapse',
+                        marginBottom: '20px',
+                        boxShadow: '0 4px 10px rgba(0,0,0,0.1)',
+                        borderRadius: '10px',
+                        overflow: 'hidden'
+                      }}>
+                        <thead>
+                          <tr style={{ background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)', color: 'white' }}>
+                            <th style={{ padding: '15px', textAlign: 'left', fontSize: '1.1em' }}>Русский</th>
+                            <th style={{ padding: '15px', textAlign: 'left', fontSize: '1.1em' }}>O'zbekcha</th>
+                            <th style={{ padding: '15px', textAlign: 'left', fontSize: '1.1em' }}>English</th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          <tr style={{ background: '#f8f9fa', borderBottom: '1px solid #e0e0e0' }}>
+                            <td style={{ padding: '15px' }}>
+                              <span style={{
+                                background: '#FFEB3B',
+                                padding: '3px 8px',
+                                borderRadius: '4px',
+                                fontWeight: 'bold',
+                                boxShadow: '0 0 10px rgba(255,235,59,0.5)',
+                                fontSize: '1.1em'
+                              }}>У</span>
+                              <div style={{ marginTop: '8px', fontSize: '0.95em', color: '#666' }}>
+                                непосредственная близость
+                              </div>
+                            </td>
+                            <td style={{ padding: '15px' }}>
+                              <strong>yonida, oldida</strong>
+                              <div style={{ marginTop: '5px', fontSize: '0.9em', color: '#666' }}>
+                                bevosita yaqinlik
+                              </div>
+                            </td>
+                            <td style={{ padding: '15px' }}>
+                              <strong>at, by, near</strong>
+                              <div style={{ marginTop: '5px', fontSize: '0.9em', color: '#666' }}>
+                                immediate proximity
+                              </div>
+                            </td>
+                          </tr>
+                          <tr style={{ background: 'white', borderBottom: '1px solid #e0e0e0' }}>
+                            <td style={{ padding: '15px' }}>
+                              <span style={{
+                                background: '#FFEB3B',
+                                padding: '3px 8px',
+                                borderRadius: '4px',
+                                fontWeight: 'bold',
+                                boxShadow: '0 0 10px rgba(255,235,59,0.5)',
+                                fontSize: '1.1em'
+                              }}>ОКОЛО</span>
+                              <div style={{ marginTop: '8px', fontSize: '0.95em', color: '#666' }}>
+                                общая близость
+                              </div>
+                            </td>
+                            <td style={{ padding: '15px' }}>
+                              <strong>atrofida, yonida</strong>
+                              <div style={{ marginTop: '5px', fontSize: '0.9em', color: '#666' }}>
+                                umumiy yaqinlik
+                              </div>
+                            </td>
+                            <td style={{ padding: '15px' }}>
+                              <strong>near, around</strong>
+                              <div style={{ marginTop: '5px', fontSize: '0.9em', color: '#666' }}>
+                                general nearness
+                              </div>
+                            </td>
+                          </tr>
+                          <tr style={{ background: '#f8f9fa', borderBottom: '1px solid #e0e0e0' }}>
+                            <td style={{ padding: '15px' }}>
+                              <span style={{
+                                background: '#FFEB3B',
+                                padding: '3px 8px',
+                                borderRadius: '4px',
+                                fontWeight: 'bold',
+                                boxShadow: '0 0 10px rgba(255,235,59,0.5)',
+                                fontSize: '1.1em'
+                              }}>ВОЗЛЕ</span>
+                              <div style={{ marginTop: '8px', fontSize: '0.95em', color: '#666' }}>
+                                рядом с объектом
+                              </div>
+                            </td>
+                            <td style={{ padding: '15px' }}>
+                              <strong>yonida, qasida</strong>
+                              <div style={{ marginTop: '5px', fontSize: '0.9em', color: '#666' }}>
+                                obyekt yonida
+                              </div>
+                            </td>
+                            <td style={{ padding: '15px' }}>
+                              <strong>beside, next to</strong>
+                              <div style={{ marginTop: '5px', fontSize: '0.9em', color: '#666' }}>
+                                right next to
+                              </div>
+                            </td>
+                          </tr>
+                          <tr style={{ background: 'white' }}>
+                            <td style={{ padding: '15px' }}>
+                              <span style={{
+                                background: '#FFEB3B',
+                                padding: '3px 8px',
+                                borderRadius: '4px',
+                                fontWeight: 'bold',
+                                boxShadow: '0 0 10px rgba(255,235,59,0.5)',
+                                fontSize: '1.1em'
+                              }}>НЕДАЛЕКО ОТ</span>
+                              <div style={{ marginTop: '8px', fontSize: '0.95em', color: '#666' }}>
+                                небольшое расстояние
+                              </div>
+                            </td>
+                            <td style={{ padding: '15px' }}>
+                              <strong>uzoqda emas, yaqin</strong>
+                              <div style={{ marginTop: '5px', fontSize: '0.9em', color: '#666' }}>
+                                kichik masofa
+                              </div>
+                            </td>
+                            <td style={{ padding: '15px' }}>
+                              <strong>not far from</strong>
+                              <div style={{ marginTop: '5px', fontSize: '0.9em', color: '#666' }}>
+                                short distance
+                              </div>
+                            </td>
+                          </tr>
+                        </tbody>
+                      </table>
+                    </div>
+
+                    <div style={{ marginBottom: '20px', background: '#f8f9fa', padding: '20px', borderRadius: '10px' }}>
+                      <h4 style={{ color: '#4ECDC4', marginBottom: '15px', textAlign: 'center' }}>
+                        Образование форм / Shakllar / Formation
+                      </h4>
+                      <div style={{ fontFamily: 'monospace', fontSize: '1.05em', lineHeight: '2' }}>
+                        <div><strong>Он (u):</strong> музей → у музе<strong style={{ color: '#FF6B6B' }}>Я</strong>, около музе<strong style={{ color: '#FF6B6B' }}>Я</strong></div>
+                        <div><strong>Она (u):</strong> школа → возле школ<strong style={{ color: '#FF6B6B' }}>Ы</strong>, около рек<strong style={{ color: '#FF6B6B' }}>И</strong></div>
+                        <div><strong>Оно (u):</strong> окно → у окн<strong style={{ color: '#FF6B6B' }}>А</strong>, возле дерев<strong style={{ color: '#FF6B6B' }}>А</strong></div>
+                      </div>
+                    </div>
+
+                    <div style={{ background: '#fff3cd', padding: '20px', borderRadius: '10px', borderLeft: '5px solid #FFB347' }}>
+                      <h4 style={{ color: '#856404', marginBottom: '12px' }}>
+                        📝 Примеры из текста о Тадж-Махале / Misollar / Examples:
+                      </h4>
+                      <ul style={{ listStyle: 'none', padding: 0, color: '#856404', lineHeight: '2' }}>
+                        <li style={{ marginBottom: '10px' }}>
+                          ✓ Тадж-Махал находится <span style={{
+                            background: '#FFEB3B',
+                            padding: '2px 8px',
+                            borderRadius: '3px',
+                            fontWeight: 'bold'
+                          }}>недалеко ОТ</span> Дел<strong>И</strong>
+                        </li>
+                        <li style={{ marginBottom: '10px' }}>
+                          ✓ <span style={{
+                            background: '#FFEB3B',
+                            padding: '2px 8px',
+                            borderRadius: '3px',
+                            fontWeight: 'bold'
+                          }}>У</span> рек<strong>И</strong> Джамна появился дворец
+                        </li>
+                        <li>
+                          ✓ <span style={{
+                            background: '#FFEB3B',
+                            padding: '2px 8px',
+                            borderRadius: '3px',
+                            fontWeight: 'bold'
+                          }}>Около</span> двадцати тысяч человек строили мавзолей
+                        </li>
+                      </ul>
+                    </div>
+                  </div>
+                )}
+              </div>
+
+              {/* Main Exercise Block */}
+              {!completed ? (
+                <div style={{
+                  maxWidth: '900px',
+                  margin: '0 auto',
+                  background: 'white',
+                  backgroundImage: `
+                    radial-gradient(circle at 20% 30%, rgba(30,58,138,0.12) 0%, transparent 50%),
+                    radial-gradient(circle at 80% 70%, rgba(245,158,11,0.12) 0%, transparent 50%),
+                    radial-gradient(circle at 40% 80%, rgba(59,130,246,0.12) 0%, transparent 50%),
+                    repeating-linear-gradient(
+                      45deg,
+                      transparent,
+                      transparent 8px,
+                      rgba(96,165,250,0.08) 8px,
+                      rgba(96,165,250,0.08) 16px
+                    ),
+                    repeating-linear-gradient(
+                      -45deg,
+                      transparent,
+                      transparent 8px,
+                      rgba(254,243,199,0.08) 8px,
+                      rgba(254,243,199,0.08) 16px
+                    ),
+                    linear-gradient(180deg, #ffffff 0%, #fefefe 100%)
+                  `,
+                  borderRadius: '15px',
+                  padding: '40px',
+                  boxShadow: '0 10px 30px rgba(0,0,0,0.2)',
+                  minHeight: '400px',
+                  position: 'relative',
+                  border: '3px solid transparent',
+                  backgroundClip: 'padding-box',
+                  borderImage: 'linear-gradient(135deg, #1e3a8a, #3b82f6, #60a5fa, #fef3c7, #f59e0b) 1'
+                }}>
+                  {currentEx && (
+                    <>
+                      <div style={{
+                        fontSize: '1.4em',
+                        marginBottom: '30px',
+                        color: '#333',
+                        fontWeight: '500',
+                        lineHeight: '1.6'
+                      }}>
+                        {currentEx.question}
+                      </div>
+
+                      <div style={{ marginBottom: '30px' }}>
+                        {currentEx.options.map((option, idx) => (
+                          <button
+                            key={idx}
+                            onClick={() => handleAnswer(option)}
+                            disabled={feedback !== null}
+                            style={{
+                              display: 'block',
+                              width: '100%',
+                              padding: '18px',
+                              margin: '12px 0',
+                              fontSize: '1.1em',
+                              border: '2px solid #e0e0e0',
+                              borderRadius: '12px',
+                              background: feedback && option === currentEx.correct
+                                ? '#d4edda'
+                                : feedback && userAnswers[currentEx.id] === option
+                                ? '#f8d7da'
+                                : 'white',
+                              cursor: feedback ? 'not-allowed' : 'pointer',
+                              transition: 'all 0.3s ease',
+                              textAlign: 'left',
+                              opacity: feedback ? 0.8 : 1,
+                              boxShadow: '0 2px 8px rgba(0,0,0,0.1)'
+                            }}
+                          >
+                            {option}
+                          </button>
+                        ))}
+                      </div>
+
+                      {feedback && (
+                        <div style={{
+                          padding: '20px',
+                          borderRadius: '12px',
+                          background: feedback.type === 'correct' ? '#d4edda' : '#f8d7da',
+                          border: `2px solid ${feedback.type === 'correct' ? '#28a745' : '#dc3545'}`,
+                          display: 'flex',
+                          alignItems: 'center',
+                          gap: '10px',
+                          fontSize: '1.1em',
+                          fontWeight: '500',
+                          marginBottom: '20px'
+                        }}>
+                          {feedback.type === 'correct' ? <Check /> : <X />}
+                          {feedback.message}
+                        </div>
+                      )}
+
+                      <button
+                        onClick={() => setShowHint(!showHint)}
+                        style={{
+                          padding: '12px 24px',
+                          background: 'linear-gradient(135deg, #FFB347 0%, #FF6B6B 100%)',
+                          color: 'white',
+                          border: 'none',
+                          borderRadius: '25px',
+                          cursor: 'pointer',
+                          fontSize: '1em',
+                          fontWeight: 'bold',
+                          display: 'flex',
+                          alignItems: 'center',
+                          gap: '8px',
+                          boxShadow: '0 4px 15px rgba(255,107,107,0.3)',
+                          transition: 'transform 0.2s'
+                        }}
+                      >
+                        <Lightbulb />
+                        {showHint ? 'Скрыть подсказку' : 'Показать подсказку'}
+                      </button>
+
+                      {showHint && (
+                        <div style={{
+                          marginTop: '20px',
+                          padding: '20px',
+                          background: '#fff3cd',
+                          border: '2px solid #FFB347',
+                          borderRadius: '12px',
+                          color: '#856404',
+                          fontSize: '1.05em'
+                        }}>
+                          💡 <strong>Подсказка:</strong> {currentEx.hint}
+                        </div>
+                      )}
+                    </>
+                  )}
+                </div>
+              ) : (
+                <div style={{
+                  maxWidth: '900px',
+                  margin: '0 auto',
+                  background: 'white',
+                  borderRadius: '15px',
+                  padding: '60px 40px',
+                  boxShadow: '0 10px 30px rgba(0,0,0,0.2)',
+                  textAlign: 'center'
+                }}>
+                  <Trophy />
+                  <h2 style={{ fontSize: '2.5em', color: '#667eea', marginBottom: '20px' }}>
+                    Поздравляем!
+                  </h2>
+                  <p style={{ fontSize: '1.5em', color: '#333', marginBottom: '30px' }}>
+                    Вы завершили уровень <strong>{selectedLevel}</strong>
+                  </p>
+                  <div style={{
+                    fontSize: '2em',
+                    fontWeight: 'bold',
+                    color: '#FF6B6B',
+                    marginBottom: '40px'
+                  }}>
+                    Ваш результат: {score} из {shuffledExercises.length} ({Math.round((score / shuffledExercises.length) * 100)}%)
+                  </div>
+                  <button
+                    onClick={resetTrainer}
+                    style={{
+                      padding: '15px 40px',
+                      background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+                      color: 'white',
+                      border: 'none',
+                      borderRadius: '25px',
+                      cursor: 'pointer',
+                      fontSize: '1.2em',
+                      fontWeight: 'bold',
+                      display: 'inline-flex',
+                      alignItems: 'center',
+                      gap: '10px',
+                      boxShadow: '0 4px 15px rgba(102,126,234,0.4)',
+                      transition: 'transform 0.2s'
+                    }}
+                  >
+                    <RotateCcw />
+                    Пройти заново
+                  </button>
+                </div>
+              )}
+
+              {/* Footer */}
+              <div style={{
+                maxWidth: '900px',
+                margin: '40px auto 0',
+                textAlign: 'center',
+                color: 'white',
+                padding: '30px',
+                background: 'rgba(0,0,0,0.2)',
+                borderRadius: '15px',
+                backdropFilter: 'blur(10px)'
+              }}>
+                <div style={{ fontSize: '1.1em', lineHeight: '1.8' }}>
+                  <strong>Разработчик:</strong> БАХТИЯР ХАМИДОВ<br />
+                  Учитель русского языка как иностранного (РКИ)<br />
+                  Школа № 33 Гулистанского района<br />
+                  Сырдарьинской области Республики Узбекистан
+                </div>
+              </div>
+            </div>
+          );
+        };
+
+        ReactDOM.render(<TajMahalTrainer />, document.getElementById('root'));
+    </script>
+</body>
+</html>
